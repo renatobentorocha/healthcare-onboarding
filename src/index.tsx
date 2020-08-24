@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  ViewToken,
+  processColor,
 } from 'react-native';
 
 import Animated, {
@@ -17,6 +19,12 @@ import Animated, {
   interpolate,
   multiply,
   Extrapolate,
+  onChange,
+  set,
+  floor,
+  divide,
+  cond,
+  eq,
 } from 'react-native-reanimated';
 import { Pilates, Jogging, Mindfulness } from './components/Svg';
 import { scale, sizeProps } from './utils';
@@ -79,10 +87,10 @@ const pages: Page[] = [
   },
 ];
 
-import { useFonts } from 'expo-font';
-
 const Onboarding: React.FC = () => {
   const scrollX = useRef(new Animated.Value<number>(0)).current;
+  const scrollEndDragX = useRef(new Animated.Value<number>(0)).current;
+  const scrollIndex = useRef(new Animated.Value<number>(0)).current;
 
   const renderItem = ({ key, page }: Page) => {
     return (
@@ -92,17 +100,24 @@ const Onboarding: React.FC = () => {
     );
   };
 
-  useCode(() => debug('scrollX', scrollX), []);
+  useCode(
+    () =>
+      onChange(
+        scrollEndDragX,
+        set(scrollIndex, floor(divide(scrollEndDragX, ORIGIN_WIDTH)))
+      ),
+    []
+  );
 
-  // const inputRange = [index * width, (index + 1) * width];
+  const indicatorScale = interpolate(scrollIndex, {
+    inputRange: pages.map((_, index) => index),
+    outputRange: pages.map(() => 1.3),
+  });
 
-  // const outputRange = [1.3, 1];
-
-  // const scale = interpolate(scrollX, {
-  //   inputRange,
-  //   outputRange,
-  //   extrapolate: Extrapolate.CLAMP,
-  // });
+  const indicatorColor = interpolate(scrollIndex, {
+    inputRange: pages.map((_, index) => index),
+    outputRange: pages.map(() => processColor('#5AC8FA')),
+  });
 
   return (
     <View style={styles.container}>
@@ -116,6 +131,9 @@ const Onboarding: React.FC = () => {
         keyExtractor={({ key }) => key}
         decelerationRate={'fast'}
         showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={event<NativeSyntheticEvent<NativeScrollEvent>>([
+          { nativeEvent: { contentOffset: { x: scrollEndDragX } } },
+        ])}
         pagingEnabled
       />
       <View style={styles.titleWrapper}>
@@ -147,7 +165,28 @@ const Onboarding: React.FC = () => {
 
       <View style={styles.counter}>
         {pages.map(({ key, page }, index) => {
-          return <Animated.View key={key} style={[styles.point]} />;
+          return (
+            <Animated.View
+              key={key}
+              style={[
+                styles.point,
+                {
+                  backgroundColor: cond(
+                    eq(scrollIndex, index),
+                    indicatorColor,
+                    processColor('#DEF4FE')
+                  ),
+                },
+                {
+                  transform: [
+                    {
+                      scale: cond(eq(scrollIndex, index), indicatorScale, 1),
+                    },
+                  ],
+                },
+              ]}
+            />
+          );
         })}
       </View>
 
@@ -209,6 +248,7 @@ const styles = StyleSheet.create({
     fontSize: scale({ ...SCALE_HEIGHT, size: 22 }),
     lineHeight: scale({ ...SCALE_HEIGHT, size: 26 }),
     color: '#5AC8FA',
+    fontWeight: '600',
   },
 });
 
