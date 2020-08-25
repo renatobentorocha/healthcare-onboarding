@@ -1,9 +1,17 @@
 import * as React from 'react';
-import Svg, { Path, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { Path, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-const Pilates = (props: React.SVGProps<SVGSVGElement>) => {
+import { AnimatedSvg, SvgProps } from './types';
+
+const Pilates = (props: SvgProps) => {
   return (
-    <Svg width={375} height={332} viewBox="0 0 375 332" fill="none" {...props}>
+    <AnimatedSvg
+      width={375}
+      height={332}
+      viewBox="0 0 375 332"
+      fill="none"
+      {...props}
+    >
       <Path
         opacity={0.1}
         d="M443.179 94.802a111.67 111.67 0 00-18.118-28.957l-251.372-2.483 206.964-29.154a117.124 117.124 0 00-41.992-8.356A117.478 117.478 0 00269.147.068a117.431 117.431 0 00-71.094 21.003 116.91 116.91 0 00-53.807-12.998c-55.85 0-102.39 38.8-112.832 90.254l411.765-3.525zM452 137.954a109.291 109.291 0 00-7.832-40.724L8.508 143.096a109.866 109.866 0 00-10.202 25.848l134.908 20.165-137.987 14.703c4.15 58.246 53.937 104.243 114.759 104.243 30.612 0 58.426-11.658 79.041-30.667 20.673 19.366 48.756 31.276 79.698 31.276 45.912 0 85.533-26.218 103.987-64.128 37.02-11.762 65.756-41.375 75.619-78.394l-170.618-26.52h174.262c0-.555.025-1.109.025-1.668z"
@@ -192,7 +200,7 @@ const Pilates = (props: React.SVGProps<SVGSVGElement>) => {
           <Stop offset={1} stopColor="gray" stopOpacity={0.1} />
         </LinearGradient>
       </Defs>
-    </Svg>
+    </AnimatedSvg>
   );
 };
 

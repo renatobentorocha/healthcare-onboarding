@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,14 +8,12 @@ import {
   TouchableOpacity,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  ViewToken,
   processColor,
 } from 'react-native';
 
 import Animated, {
   event,
   useCode,
-  debug,
   interpolate,
   multiply,
   Extrapolate,
@@ -25,9 +23,13 @@ import Animated, {
   divide,
   cond,
   eq,
+  sub,
+  add,
 } from 'react-native-reanimated';
+
 import { Pilates, Jogging, Mindfulness } from './components/Svg';
 import { scale, sizeProps } from './utils';
+import { SvgProps } from './components/Svg/types';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
@@ -50,55 +52,50 @@ const SCALE_WIDTH: sizeProps = {
 
 type Page = {
   key: string;
-  page: {
-    hero: JSX.Element;
-    title: string;
-    excerpt: string;
-  };
+  Hero: (props: SvgProps) => JSX.Element;
+  title: string;
+  excerpt: string;
 };
 
 const pages: Page[] = [
   {
     key: 'pilates',
-    page: {
-      hero: <Pilates />,
-      title: 'Improve body balance',
-      excerpt:
-        'Exercise can improve your stability and also what is called your “kinesthetic awareness.',
-    },
+    Hero: Pilates,
+    title: 'Improve body balance',
+    excerpt:
+      'Exercise can improve your stability and also what is called your “kinesthetic awareness.',
   },
   {
     key: 'jogging',
-    page: {
-      hero: <Jogging />,
-      title: 'Stop wishing and get fit',
-      excerpt:
-        'Regardless of your body appearance, regular fitness helps improve your self-esteem.',
-    },
+    Hero: Jogging,
+    title: 'Stop wishing and get fit',
+    excerpt:
+      'Regardless of your body appearance, regular fitness helps improve your self-esteem.',
   },
   {
     key: 'mindfulness',
-    page: {
-      hero: <Mindfulness />,
-      title: 'Relieve stress with yoga',
-      excerpt:
-        'Yoga reduces stress and anxiety, which in turn reduces the physical effects of stress on the body.',
-    },
+    Hero: Mindfulness,
+    title: 'Relieve stress with yoga',
+    excerpt:
+      'Yoga reduces stress and anxiety, which in turn reduces the physical effects of stress on the body.',
   },
 ];
+
+type RenderItemProps = {
+  page: Page;
+  opacity: Animated.Node<number>;
+};
+
+const renderItem = ({ page: { Hero, key }, opacity }: RenderItemProps) => (
+  <View key={key} style={styles.item}>
+    <Hero opacity={opacity} />
+  </View>
+);
 
 const Onboarding: React.FC = () => {
   const scrollX = useRef(new Animated.Value<number>(0)).current;
   const scrollEndDragX = useRef(new Animated.Value<number>(0)).current;
   const scrollIndex = useRef(new Animated.Value<number>(0)).current;
-
-  const renderItem = ({ key, page }: Page) => {
-    return (
-      <View key={key} style={styles.item}>
-        {page.hero}
-      </View>
-    );
-  };
 
   useCode(
     () =>
@@ -127,7 +124,18 @@ const Onboarding: React.FC = () => {
         ])}
         horizontal
         data={pages}
-        renderItem={({ item }) => renderItem(item)}
+        renderItem={({ item, index }) => {
+          const pageOpacity = interpolate(scrollX, {
+            inputRange: [
+              multiply(sub(index, 1), ORIGIN_WIDTH),
+              multiply(index, ORIGIN_WIDTH),
+              multiply(add(index, 1), ORIGIN_WIDTH),
+            ],
+            outputRange: [0, 1, 0],
+            extrapolate: Extrapolate.CLAMP,
+          });
+          return renderItem({ page: item, opacity: pageOpacity });
+        }}
         keyExtractor={({ key }) => key}
         decelerationRate={'fast'}
         showsHorizontalScrollIndicator={false}
@@ -137,7 +145,7 @@ const Onboarding: React.FC = () => {
         pagingEnabled
       />
       <View style={styles.titleWrapper}>
-        {pages.map(({ key, page }, index) => {
+        {pages.map(({ key, title }, index) => {
           const inputRange = [index * width, (index + 1) * width];
           const outputRange = [
             index * scale({ ...SCALE_HEIGHT, size: 36 }),
@@ -157,14 +165,14 @@ const Onboarding: React.FC = () => {
                 { transform: [{ translateY: multiply(-1, translateY) }] },
               ]}
             >
-              {page.title}
+              {title}
             </Animated.Text>
           );
         })}
       </View>
 
       <View style={styles.counter}>
-        {pages.map(({ key, page }, index) => {
+        {pages.map(({ key }, index) => {
           return (
             <Animated.View
               key={key}
@@ -209,7 +217,7 @@ const styles = StyleSheet.create({
   },
   titleWrapper: {
     position: 'absolute',
-    top: scale({ ...SCALE_HEIGHT, size: 493 }),
+    top: scale({ ...SCALE_HEIGHT, size: 510 }),
     height: scale({ ...SCALE_HEIGHT, size: 36 }),
     overflow: 'hidden',
   },
