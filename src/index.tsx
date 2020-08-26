@@ -146,15 +146,24 @@ const Onboarding: React.FC = () => {
       />
       <View style={styles.titleWrapper}>
         {pages.map(({ key, title }, index) => {
-          const inputRange = [index * width, (index + 1) * width];
-          const outputRange = [
-            index * scale({ ...SCALE_HEIGHT, size: 36 }),
-            (index + 1) * scale({ ...SCALE_HEIGHT, size: 36 }),
-          ];
-
           const translateY = interpolate(scrollX, {
-            inputRange,
-            outputRange,
+            inputRange: [
+              multiply(index, ORIGIN_WIDTH),
+              multiply(add(index, 1), ORIGIN_WIDTH),
+            ],
+            outputRange: [
+              multiply(index, scale({ ...SCALE_HEIGHT, size: 36 })),
+              multiply(add(index, 1), scale({ ...SCALE_HEIGHT, size: 36 })),
+            ],
+          });
+
+          const opacity = interpolate(scrollX, {
+            inputRange: [
+              multiply(sub(index, 1), ORIGIN_WIDTH),
+              multiply(index, ORIGIN_WIDTH),
+              multiply(add(index, 1), ORIGIN_WIDTH),
+            ],
+            outputRange: [0, 1, 0],
           });
 
           return (
@@ -162,6 +171,7 @@ const Onboarding: React.FC = () => {
               key={key}
               style={[
                 styles.title,
+                { opacity },
                 { transform: [{ translateY: multiply(-1, translateY) }] },
               ]}
             >
